@@ -1,0 +1,7 @@
+abuse_finder==0.3
+dnspython==2.3.0
+python-dotenv==1.0.0
+querycontacts==2.0.0
+requests==2.25.1
+selenium==4.8.2
+tldextract==3.4.0
