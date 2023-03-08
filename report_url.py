@@ -98,7 +98,7 @@ def get_abuse_email_registrar(url):
     except Exception as err:
         if DEBUG == 'True':
             print(err)
-            print("WHOIS data:\n " + domain_abuse(domain) + "\n")
+            print("WHOIS data:\n " + str(domain_abuse(domain)) + "\n")
 
 def fill_in_cloudflare_form(url, reason):
     try:
@@ -209,7 +209,7 @@ def report_abuse_to_host(url, reason, abuse_email_host):
             msg['MIME-Version'] = '1.0'
 
             # Create human-readable part
-            human_part = MIMEText("Dear,\n\nPlease find the reported url below:\n" + url + "\nHosted on IP: " + ip + "\nReport reason: " + reason + "\nReport time stamp (UTC):" + str(get_date()) + "\n\nKind regards,\n "+REPORTER_NAME +  + """\n\n\n\n\n\nThe recipient address of this report was provided by the Abuse Contact DB by Abusix.
+            human_part = MIMEText("Dear,\n\nPlease find the reported url below:\n" + url + "\nHosted on IP: " + ip + "\nReport reason: " + reason + "\nReport time stamp (UTC):" + str(get_date()) + "\n\nKind regards,\n "+ REPORTER_NAME + """\n\n\n\n\n\nThe recipient address of this report was provided by the Abuse Contact DB by Abusix.
     Abusix provides a free IP address to abuse@ address lookup service.  Abusix does not maintain the core database content but provides a service built on top of the RIR databases.
     If you wish to change or report a non-working abuse contact address, please contact the appropriate RIR responsible for managing the underlying data.
     If you have any further questions about using the Abusix Abuse Contact DB, please either contact us via email at support@abusix.ai or visit https://abusix.com/contactdb
