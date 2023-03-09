@@ -3,6 +3,7 @@ import socket
 import time
 import json
 import datetime
+from sys import platform
 
 import dns.resolver
 import requests
@@ -16,6 +17,7 @@ from dotenv import load_dotenv
 from tldextract import extract
 from selenium import webdriver
 from selenium.webdriver import FirefoxOptions
+from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -104,7 +106,12 @@ def fill_in_cloudflare_form(url, reason):
     try:
         opts = FirefoxOptions()
         opts.add_argument("--headless")
-        web = webdriver.Firefox(options=opts)
+        # check if OS is Windows
+        if platform == 'win32':
+            binary = FirefoxBinary('C:\Firefox\Firefox.exe')
+            web = webdriver.Firefox(firefox_binary=binary)
+        else:
+            web = webdriver.Firefox(options=opts)
         web.get("https://abuse.cloudflare.com/phishing")
         time.sleep(3)
         name = web.find_element("xpath",'//*[@id="root"]/main/div/div[2]/form/div[1]/label/div/div[2]/div/input')

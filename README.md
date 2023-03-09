@@ -9,6 +9,7 @@ $ virtualenv venv
 $ source venv/bin/activate
 $ pip install -r requirements.txt
 ```
+Also install the firefox gecko driver if you want the Cloudflare webform report to work. You can download it from https://github.com/mozilla/geckodriver/releases
 
 ## Configuration
 The credentials and other setting are stored in a .env file. You can rename the .env.example file to .env and fill in the credentials.
