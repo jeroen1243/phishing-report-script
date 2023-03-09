@@ -1,6 +1,8 @@
 # Phishing report script
 This project is a tool to report phishing sites to the hosting provider, registrar and multiple anti-phishing services.
 
+# WINDOWS IS NOT SUPPORTED AT THE MOMENT
+
 ## Installation with pip and virtual environment
 ``` bash
 $ git clone https://github.com/jeroen1243/anti-phishing
