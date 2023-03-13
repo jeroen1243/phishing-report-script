@@ -18,10 +18,6 @@ from tldextract import extract
 from selenium import webdriver
 from selenium.webdriver import FirefoxOptions
 from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions
 
 from abuse_finder import domain_abuse
 import querycontacts
@@ -29,6 +25,11 @@ import querycontacts
 dns.resolver.default_resolver=dns.resolver.Resolver(configure=False)
 dns.resolver.default_resolver.nameservers=['8.8.8.8']
 
+HOSTING_PROVIDER = False
+REGISTRAR = False
+PHISHING_INSTANCES = False
+NETCRAFT = False
+CRDF = False
 
 
 # load variables from .env file
@@ -113,7 +114,7 @@ def fill_in_cloudflare_form(url, reason):
         else:
             web = webdriver.Firefox(options=opts)
         web.get("https://abuse.cloudflare.com/phishing")
-        time.sleep(3)
+        time.sleep(2)
         name = web.find_element("xpath",'//*[@id="root"]/main/div/div[2]/form/div[1]/label/div/div[2]/div/input')
         name.send_keys(REPORTER_NAME)
         email1 = web.find_element("xpath",'/html/body/div/main/div/div[2]/form/div[2]/label/div/div[2]/div/input')
@@ -133,6 +134,8 @@ def fill_in_cloudflare_form(url, reason):
         button = web.find_element("xpath",'/html/body/div/main/div/div[2]/form/div[11]/div/button')
         button.click()
         print("Abuse report send to Cloudflare")
+        global HOSTING_PROVIDER
+        HOSTING_PROVIDER = True
     except Exception as err:
         if DEBUG == 'True':
             print(err)
@@ -145,7 +148,6 @@ def report_domain_to_registrar(url, reason, abuse_email_registrar):
         msg = MIMEMultipart('report', report_type='feedback-report')
         msg['From'] = EMAIL_FROM
         msg['To'] = str(abuse_email_registrar[0])
-        msg['Cc'] = EMAIL_COPY
         msg['Subject'] = 'Report malicious domain'
         msg['MIME-Version'] = '1.0'
 
@@ -186,7 +188,6 @@ def report_domain_to_registrar(url, reason, abuse_email_registrar):
         msg = MIMEMultipart()
         msg['From'] = EMAIL_FROM
         msg['To'] = str(abuse_email_registrar[0])
-        msg['Cc'] = EMAIL_COPY
         msg['Subject'] = 'Report malicious domain'
         msg.attach(MIMEText('Dear,\n\nPlease find the reported url below:\n' + url + '\nReport reason: '+ reason, 'plain'))
 
@@ -197,7 +198,9 @@ def report_domain_to_registrar(url, reason, abuse_email_registrar):
             server.starttls()
             server.login(SMTP_USER, SMTP_PASSWORD)
             server.sendmail(SMTP_USER, abuse_email_registrar, msg.as_string())
-            print("Abuse report send to:" + msg['to'])   
+            print("Abuse report send to:" + msg['to']) 
+            global REGISTRAR 
+            REGISTRAR = True  
     except Exception as e:
         if DEBUG == True:
             print(f'Error: {e}')       
@@ -211,7 +214,6 @@ def report_abuse_to_host(url, reason, abuse_email_host):
             msg = MIMEMultipart('report', report_type='feedback-report')
             msg['From'] = EMAIL_FROM
             msg['To'] = str(abuse_email_host[0])
-            msg['Cc'] = EMAIL_COPY
             msg['Subject'] = 'Report malicious site hosted on IP: ' + ip
             msg['MIME-Version'] = '1.0'
 
@@ -256,7 +258,6 @@ def report_abuse_to_host(url, reason, abuse_email_host):
             msg = MIMEMultipart()
             msg['From'] = EMAIL_FROM
             msg['To'] = str(abuse_email_host[0])
-            msg['Cc'] = EMAIL_COPY
             msg['Subject'] = 'Report malicious site hosted on IP: ' + ip
             msg.attach(MIMEText("Dear,\n\nPlease find the reported url below:\n" + url + "\nHosted on IP: " + ip + "\nReport reason: " + reason + "\nReport time stamp (UTC):" + str(get_date()) + "\n\nKind regards,\n "+REPORTER_NAME +  + """\n\n\n\n\n\nThe recipient address of this report was provided by the Abuse Contact DB by Abusix.
     Abusix provides a free IP address to abuse@ address lookup service.  Abusix does not maintain the core database content but provides a service built on top of the RIR databases.
@@ -271,7 +272,8 @@ def report_abuse_to_host(url, reason, abuse_email_host):
                 server.starttls()
                 server.login(SMTP_USER, SMTP_PASSWORD)
                 server.sendmail(SMTP_USER, abuse_email_host, msg.as_string())
-                print("Abuse report send to:" + msg['to'])   
+                print("Abuse report send to:" + msg['to']) 
+                HOST = True  
         except Exception as e:
             print(f'Error: {e}')
 
@@ -300,7 +302,6 @@ def report_abuse(url, reason):
         email = EmailMessage()
         email['from'] = EMAIL_FROM
         email['to'] = receivers
-        email['cc'] = EMAIL_COPY
         email['subject'] = 'Report malicious site'
         email.set_content("Dear,\n\nPlease find the reported url below:\n" + url + "\nHosted on IP: " + ip + "\nReport reason: " + reason + "\nReport time stamp (UTC):" + str(now) + "\n\nKind regards,\n"+REPORTER_NAME + "")
         with smtplib.SMTP(host=SMTP_SERVER, port=SMTP_PORT) as smtp:
@@ -309,6 +310,7 @@ def report_abuse(url, reason):
             smtp.login(SMTP_USER, SMTP_PASSWORD)
             smtp.send_message(email)
         print("Abuse report send to:" + email['to'])
+        PHISHING_INSTANCES = True
 
     if NETCRAFT_EMAIL:
         if (input("\nDo you want to report it to Netcraft? (y/n): ") == "y"):
@@ -318,6 +320,7 @@ def report_abuse(url, reason):
             r = requests.post('https://report.netcraft.com/api/v3/report/urls', json={ "email": NETCRAFT_EMAIL, "urls": data,
             }, headers=headers)
             print(r.text)
+            NETCRAFT = True
 
     if CRDF_API_KEY:
         if (input("\nDo you want to report it to CRDF? (y/n): ") == "y"):
@@ -329,6 +332,35 @@ def report_abuse(url, reason):
             "urls": crdf_urls
             })
             print(r.text)
+            CRDF = True
+
+    if EMAIL_COPY:
+        email = EmailMessage()
+        email['from'] = EMAIL_FROM
+        email['to'] = EMAIL_COPY
+        email['subject'] = 'Report malicious site report'
+        content = ""
+        content += "Reported url: " + url + "\n"
+        content += "Report reason: " + reason + "\n"
+        content += "Report time stamp (UTC):" + str(now) + "\n"
+        content += "Reported by: " + REPORTER_NAME + "\n"
+        content += "Here is a quick overview of the actions taken: \n\n"
+        if HOSTING_PROVIDER:
+            content += "Abuse report send to:" + abuse_email_host[0] + "\n"
+        if REGISTRAR:
+            content += "Abuse report send to:" + abuse_email_registrar[0]  + "\n"
+        if PHISHING_INSTANCES:
+            content += "Abuse report send to:" + receivers + "\n"
+        if NETCRAFT:
+            content += "Abuse report send to Netcraft" + "\n"
+        if CRDF:
+            content += "Abuse report send to CRDF" + "\n"
+        email.set_content(content)
+        with smtplib.SMTP(host=SMTP_SERVER, port=SMTP_PORT) as smtp:
+            smtp.ehlo()
+            smtp.starttls()
+            smtp.login(SMTP_USER, SMTP_PASSWORD)
+            smtp.send_message(email)
 
         
 
