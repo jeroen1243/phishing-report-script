@@ -1,12 +1,13 @@
 # Phishing report script
 This project is a tool to report phishing sites to the hosting provider, registrar and multiple anti-phishing services.
 
+# WINDOWS IS NOT SUPPORTED AT THE MOMENT
+
 ## Installation with pip and virtual environment
 ``` bash
 $ git clone https://github.com/jeroen1243/anti-phishing
 $ cd anti-phishing
 $ virtualenv venv
-
 $ source venv/bin/activate # for Linux
 $ .\venv\Scripts\activate # for Windows (you also might need to change te execution policy by running: $ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned
 $ pip install -r requirements.txt
